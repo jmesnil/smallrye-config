@@ -32,6 +32,14 @@ class Converters {
     static final Converter<String> STRING_CONVERTER = (Converter & Serializable) value -> value;
 
     @SuppressWarnings("unchecked")
+    static final Converter<Character> CHARACTER_CONVERTER = (Converter & Serializable) value -> {
+        if (value.length() == 1) {
+            return Character.valueOf(value.charAt(0));
+        }
+        throw new IllegalArgumentException(value + " can not be converted to a Character");
+    };
+
+    @SuppressWarnings("unchecked")
     static final Converter<Boolean> BOOLEAN_CONVERTER = (Converter & Serializable) value -> {
         if (value != null) {
             return "TRUE".equalsIgnoreCase(value)
@@ -61,6 +69,12 @@ class Converters {
     static final Converter<Integer> INTEGER_CONVERTER = (Converter & Serializable) value -> value != null ? Integer.valueOf(value) : null;
 
     @SuppressWarnings("unchecked")
+    static final Converter<Short> SHORT_CONVERTER = (Converter & Serializable) value -> value != null ? Short.valueOf(value) : null;
+
+    @SuppressWarnings("unchecked")
+    static final Converter<Byte> BYTE_CONVERTER = (Converter & Serializable) value -> value != null ? Byte.valueOf(value) : null;
+
+    @SuppressWarnings("unchecked")
     static final Converter<Class<?>> CLASS_CONVERTER = (Converter & Serializable) value -> {
         try {
             return value != null ? Class.forName(value, true, SecuritySupport.getContextClassLoader()) : null;
@@ -88,6 +102,15 @@ class Converters {
 
         ALL_CONVERTERS.put(Integer.class, INTEGER_CONVERTER);
         ALL_CONVERTERS.put(Integer.TYPE, INTEGER_CONVERTER);
+
+        ALL_CONVERTERS.put(Short.class, SHORT_CONVERTER);
+        ALL_CONVERTERS.put(Short.TYPE, SHORT_CONVERTER);
+
+        ALL_CONVERTERS.put(Byte.class, BYTE_CONVERTER);
+        ALL_CONVERTERS.put(Byte.TYPE, BYTE_CONVERTER);
+
+        ALL_CONVERTERS.put(Character.class, CHARACTER_CONVERTER);
+        ALL_CONVERTERS.put(Character.TYPE, CHARACTER_CONVERTER);
 
         ALL_CONVERTERS.put(Class.class, CLASS_CONVERTER);
     }
