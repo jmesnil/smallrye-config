@@ -69,12 +69,18 @@ public class ConfigExtension implements Extension {
                         && ip.getType() != String.class
                         && ip.getType() != Boolean.class
                         && ip.getType() != Boolean.TYPE
+                        && ip.getType() != Byte.class
+                        && ip.getType() != Byte.TYPE
+                        && ip.getType() != Short.class
+                        && ip.getType() != Short.TYPE
                         && ip.getType() != Integer.class
                         && ip.getType() != Integer.TYPE
                         && ip.getType() != Long.class
                         && ip.getType() != Long.TYPE
                         && ip.getType() != Float.class
                         && ip.getType() != Float.TYPE
+                        && ip.getType() != Character.class
+                        && ip.getType() != Character.TYPE
                         && ip.getType() != Double.class
                         && ip.getType() != Double.TYPE)
                 .map(ip -> (Class<?>) ip.getType())

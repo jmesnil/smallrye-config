@@ -74,11 +74,13 @@ public class ConfigProducerUtil {
                 return optionalValue.get();
             } else {
                 String defaultValue = getDefaultValue(injectionPoint);
+                if (defaultValue != null && defaultValue.equals(ConfigProperty.NULL_VALUE)) {
+                        return null;
+                }
                 if (defaultValue != null && !defaultValue.equals(ConfigProperty.UNCONFIGURED_VALUE)) {
                     return ((SmallRyeConfig) config).convert(defaultValue, target);
-                } else {
-                    return null;
                 }
+                return  null;
             }
         } catch (RuntimeException e) {
             return null;

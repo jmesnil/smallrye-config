@@ -51,6 +51,12 @@ public class ConfigProducer implements Serializable{
 
     @Dependent
     @Produces @ConfigProperty
+    Character produceCharacterConfigProperty(InjectionPoint ip) {
+        return ConfigProducerUtil.getValue(ip, Character.class, getConfig(ip));
+    }
+
+    @Dependent
+    @Produces @ConfigProperty
     Long getLongValue(InjectionPoint ip) {
         return ConfigProducerUtil.getValue(ip, Long.class, getConfig(ip));
     }
@@ -59,6 +65,19 @@ public class ConfigProducer implements Serializable{
     @Produces @ConfigProperty
     Integer getIntegerValue(InjectionPoint ip) {
         return ConfigProducerUtil.getValue(ip, Integer.class, getConfig(ip));
+    }
+
+
+    @Dependent
+    @Produces @ConfigProperty
+    Short getShortValue(InjectionPoint ip) {
+        return ConfigProducerUtil.getValue(ip, Short.class, getConfig(ip));
+    }
+
+    @Dependent
+    @Produces @ConfigProperty
+    Byte getByteValue(InjectionPoint ip) {
+        return ConfigProducerUtil.getValue(ip, Byte.class, getConfig(ip));
     }
 
     @Dependent
