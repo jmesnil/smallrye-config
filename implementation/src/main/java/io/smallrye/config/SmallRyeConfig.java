@@ -30,6 +30,9 @@ import java.util.Optional;
 import java.util.Set;
 
 import org.eclipse.microprofile.config.Config;
+import org.eclipse.microprofile.config.ConfigAccessor;
+import org.eclipse.microprofile.config.ConfigAccessorBuilder;
+import org.eclipse.microprofile.config.ConfigSnapshot;
 import org.eclipse.microprofile.config.spi.ConfigSource;
 import org.eclipse.microprofile.config.spi.Converter;
 
@@ -122,5 +125,15 @@ public class SmallRyeConfig implements Config, Serializable {
             }
             return converter;
         }
+    }
+
+    @Override
+    public <T> ConfigAccessorBuilder<T> access(String propertyName, Class<T> type) {
+        return new SmallRyeConfigAccessorBuilder(propertyName, type, this);
+    }
+
+    @Override
+    public ConfigSnapshot snapshotFor(ConfigAccessor<?>... configValues) {
+        return new SmallRyeConfigSnapshot(configValues);
     }
 }

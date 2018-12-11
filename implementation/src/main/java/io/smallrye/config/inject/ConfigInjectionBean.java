@@ -175,6 +175,21 @@ public class ConfigInjectionBean<T> implements Bean<T>, PassivationCapable {
         public String defaultValue() {
             return "";
         }
+
+        @Override
+        public boolean evaluateVariables() {
+            return false;
+        }
+
+        @Override
+        public TimeUnit cacheTimeUnit() {
+            return TimeUnit.SECONDS;
+        }
+
+        @Override
+        public long cacheFor() {
+            return 0;
+        }
     }
 
     private static class InjectionPointMetadataInjectionPoint implements InjectionPoint {
