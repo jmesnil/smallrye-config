@@ -16,9 +16,13 @@
 
 package io.smallrye.config;
 
+import static org.eclipse.microprofile.config.spi.ConfigSource.ChangeSupport.Type.UNSUPPORTED;
+
 import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
+import java.util.function.Consumer;
 
 import org.eclipse.microprofile.config.spi.ConfigSource;
 
@@ -44,6 +48,11 @@ class SysPropConfigSource implements ConfigSource, Serializable {
     @Override
     public String getValue(String s) {
         return System.getProperty(s);
+    }
+
+    @Override
+    public ChangeSupport onAttributeChange(Consumer<Set<String>> callback) {
+        return () -> UNSUPPORTED;
     }
 
     @Override

@@ -16,11 +16,15 @@
 
 package io.smallrye.config;
 
+import static org.eclipse.microprofile.config.spi.ConfigSource.ChangeSupport.Type.UNSUPPORTED;
+
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 import org.eclipse.microprofile.config.spi.ConfigSource;
@@ -93,6 +97,11 @@ public class DirConfigSource implements ConfigSource {
     @Override
     public String getName() {
         return "DirConfigSource[dir=" + dir.getAbsolutePath() + "]";
+    }
+
+    @Override
+    public ChangeSupport onAttributeChange(Consumer<Set<String>> callback) {
+        return () -> UNSUPPORTED;
     }
 
     @Override

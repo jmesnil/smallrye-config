@@ -18,9 +18,12 @@ package io.smallrye.config;
 
 import static java.lang.reflect.Array.newInstance;
 
+import java.io.Closeable;
+import java.io.IOException;
 import java.io.Serializable;
 import java.lang.reflect.Array;
 import java.lang.reflect.Type;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -28,6 +31,7 @@ import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Consumer;
 
 import org.eclipse.microprofile.config.Config;
 import org.eclipse.microprofile.config.ConfigAccessor;
@@ -39,15 +43,38 @@ import org.eclipse.microprofile.config.spi.Converter;
 /**
  * @author <a href="http://jmesnil.net/">Jeff Mesnil</a> (c) 2017 Red Hat inc.
  */
-public class SmallRyeConfig implements Config, Serializable {
+public class SmallRyeConfig implements Config, Serializable, Closeable {
 
     private final List<ConfigSource> configSources;
     private Map<Type, Converter> converters;
+    private Map<String, List<SmallryeConfigAccessor>> configAccessors = new HashMap<>();
+
+    private Consumer<Set<String>> cacheInvalidator = (Serializable & Consumer<Set<String>>) propertyNames -> {
+        for (Map.Entry<String, List<SmallryeConfigAccessor>> entry : configAccessors.entrySet()) {
+            if (propertyNames.contains(entry.getKey()));
+            for (SmallryeConfigAccessor smallryeConfigAccessor : entry.getValue()) {
+                smallryeConfigAccessor.invalidateCachedValue();
+            }
+        }
+    };
+    private final Set<ConfigSource.ChangeSupport> registeredChangedSupport = new HashSet<>();
 
     protected SmallRyeConfig(List<ConfigSource> configSources, Map<Type, Converter> converters) {
         this.configSources = configSources;
         this.converters = new HashMap<>(Converters.ALL_CONVERTERS);
         this.converters.putAll(converters);
+
+        for (ConfigSource configSource : configSources) {
+            ConfigSource.ChangeSupport changeSupport = configSource.onAttributeChange(cacheInvalidator);
+            registeredChangedSupport.add(changeSupport);
+        }
+    }
+
+    @Override
+    public void close() throws IOException {
+        for (ConfigSource.ChangeSupport support : registeredChangedSupport) {
+            support.close();
+        }
     }
 
     @Override
@@ -135,5 +162,12 @@ public class SmallRyeConfig implements Config, Serializable {
     @Override
     public ConfigSnapshot snapshotFor(ConfigAccessor<?>... configValues) {
         return new SmallRyeConfigSnapshot(configValues);
+    }
+
+    public void addConfigAccessor(String propertyName, SmallryeConfigAccessor configAccessor) {
+        if (!configAccessors.containsKey(propertyName)) {
+            configAccessors.put(propertyName, new ArrayList<>());
+        }
+        configAccessors.get(propertyName).add(configAccessor);
     }
 }

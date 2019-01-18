@@ -1,16 +1,16 @@
 package io.smallrye.config;
 
+import java.io.Serializable;
 import java.util.Optional;
 
-import org.eclipse.microprofile.config.Config;
 import org.eclipse.microprofile.config.ConfigAccessor;
 import org.eclipse.microprofile.config.ConfigSnapshot;
 import org.eclipse.microprofile.config.spi.Converter;
 
-public class SmallryeConfigAccessor<T> implements ConfigAccessor<T> {
+public class SmallryeConfigAccessor<T> implements ConfigAccessor<T>, Serializable {
 
-    private final Config config;
-    private final  Class<T> type;
+    private final SmallRyeConfig config;
+    private final Class<T> type;
     private final String propertyName;
     private final String resolvedPropertyName;
     private final T defaultValue;
@@ -20,7 +20,7 @@ public class SmallryeConfigAccessor<T> implements ConfigAccessor<T> {
     private T cachedValue;
     private long cachedTime = System.nanoTime();
 
-    SmallryeConfigAccessor(Config config, Class<T> type, String propertyName, String resolvedPropertyName, T defaultValue, Converter<T> converter, long cacheNanos) {
+    SmallryeConfigAccessor(SmallRyeConfig config, Class<T> type, String propertyName, String resolvedPropertyName, T defaultValue, Converter<T> converter, long cacheNanos) {
         this.config = config;
         this.type = type;
         this.propertyName = propertyName;
@@ -28,6 +28,8 @@ public class SmallryeConfigAccessor<T> implements ConfigAccessor<T> {
         this.defaultValue = defaultValue;
         this.converter = converter;
         this.cacheNanos = cacheNanos;
+
+        config.addConfigAccessor(propertyName, this);
     }
 
     @Override
@@ -83,5 +85,12 @@ public class SmallryeConfigAccessor<T> implements ConfigAccessor<T> {
     @Override
     public T getDefaultValue() {
         return defaultValue;
+    }
+
+    public void invalidateCachedValue() {
+        cachedValue = null;
+        if (cacheNanos != -1) {
+            cachedTime = System.nanoTime();
+        }
     }
 }
