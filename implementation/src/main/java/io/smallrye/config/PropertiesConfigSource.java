@@ -16,6 +16,9 @@
 
 package io.smallrye.config;
 
+import static org.eclipse.microprofile.config.spi.ConfigSource.ChangeSupport.Type.IMMUTABLE;
+import static org.eclipse.microprofile.config.spi.ConfigSource.ChangeSupport.Type.UNSUPPORTED;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Serializable;
@@ -24,6 +27,8 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Set;
+import java.util.function.Consumer;
 
 import org.eclipse.microprofile.config.spi.ConfigSource;
 
@@ -38,6 +43,7 @@ public class PropertiesConfigSource implements ConfigSource, Serializable {
     private final Map<String, String> properties;
     private final String source;
     private final int ordinal;
+    private final ChangeSupport changeSupport;
 
     public PropertiesConfigSource(URL url) throws IOException {
         this.source = url.toString();
@@ -47,11 +53,14 @@ public class PropertiesConfigSource implements ConfigSource, Serializable {
             properties = new HashMap(p);
         }
         this.ordinal = Integer.valueOf(properties.getOrDefault(CONFIG_ORDINAL_KEY, CONFIG_ORDINAL_DEFAULT_VALUE));
+        this.changeSupport = () -> IMMUTABLE;
     }
+
     public PropertiesConfigSource(Properties properties, String source) {
         this.properties = new HashMap(properties);
         this.source = source;
         this.ordinal = Integer.valueOf(properties.getProperty(CONFIG_ORDINAL_KEY, CONFIG_ORDINAL_DEFAULT_VALUE));
+        this.changeSupport = () -> UNSUPPORTED;
     }
 
     public PropertiesConfigSource(Map<String, String> properties, String source, int ordinal) {
@@ -62,6 +71,7 @@ public class PropertiesConfigSource implements ConfigSource, Serializable {
         } else {
             this.ordinal = ordinal;
         }
+        this.changeSupport = () -> UNSUPPORTED;
     }
 
     @Override
@@ -82,6 +92,11 @@ public class PropertiesConfigSource implements ConfigSource, Serializable {
     @Override
     public String getName() {
         return "PropertiesConfigSource[source=" + source + "]";
+    }
+
+    @Override
+    public ChangeSupport onAttributeChange(Consumer<Set<String>> callback) {
+        return changeSupport;
     }
 
     @Override
