@@ -76,11 +76,6 @@ public class SmallryeConfigAccessor<T> implements ConfigAccessor<T> {
     }
 
     @Override
-    public String getResolvedPropertyName() {
-        return resolvedPropertyName;
-    }
-
-    @Override
     public T getDefaultValue() {
         return defaultValue;
     }

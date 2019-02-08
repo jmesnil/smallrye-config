@@ -1,7 +1,6 @@
 package io.smallrye.config;
 
 import java.time.Duration;
-import java.time.temporal.ChronoUnit;
 
 import org.eclipse.microprofile.config.ConfigAccessor;
 import org.eclipse.microprofile.config.ConfigAccessorBuilder;
@@ -15,9 +14,8 @@ public class SmallRyeConfigAccessorBuilder<T> implements ConfigAccessorBuilder<T
     private Converter<T> converter;
     private T defaultValue;
     private String defaultStringValue;
-    private long cacheTime = -1;
-    private ChronoUnit cacheUnit;
     private boolean evaluateVariables;
+    private Duration cacheDuration = null;
 
     public SmallRyeConfigAccessorBuilder(String propertyName, Class<T> type, SmallRyeConfig config) {
         this.propertyName = propertyName;
@@ -44,9 +42,8 @@ public class SmallRyeConfigAccessorBuilder<T> implements ConfigAccessorBuilder<T
     }
 
     @Override
-    public ConfigAccessorBuilder<T> cacheFor(long value, ChronoUnit timeUnit) {
-        this.cacheTime = value;
-        this.cacheUnit = timeUnit;
+    public ConfigAccessorBuilder<T> cacheFor(Duration duration) {
+        this.cacheDuration = duration;
         return this;
     }
 
@@ -57,23 +54,13 @@ public class SmallRyeConfigAccessorBuilder<T> implements ConfigAccessorBuilder<T
     }
 
     @Override
-    public ConfigAccessorBuilder<T> addLookupSuffix(String suffixValue) {
-        return this;
-    }
-
-    @Override
-    public ConfigAccessorBuilder<T> addLookupSuffix(ConfigAccessor<String> suffixAccessor) {
-        return this;
-    }
-
-    @Override
     public ConfigAccessor<T> build() {
         String resolvedPropertyName = resolvePropertyName();
         T resolvedDefaultValue = resolvedDefaultValue();
 
         long cacheNanos = -1;
-        if (cacheTime != -1) {
-            cacheNanos = Duration.of(cacheTime, cacheUnit).toNanos();
+        if (cacheDuration != null) {
+            cacheNanos = cacheDuration.toNanos();
         }
         return new SmallryeConfigAccessor(config, type, propertyName, resolvedPropertyName, resolvedDefaultValue, converter, cacheNanos);
     }
