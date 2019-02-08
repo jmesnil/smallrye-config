@@ -14,7 +14,7 @@ public class SmallRyeConfigAccessorBuilder<T> implements ConfigAccessorBuilder<T
     private Converter<T> converter;
     private T defaultValue;
     private String defaultStringValue;
-    private boolean evaluateVariables;
+    private boolean evaluateVariables = true;
     private Duration cacheDuration = null;
 
     public SmallRyeConfigAccessorBuilder(String propertyName, Class<T> type, SmallRyeConfig config) {

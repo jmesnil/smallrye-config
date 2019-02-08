@@ -9,7 +9,7 @@ import org.eclipse.microprofile.config.spi.Converter;
 
 public class SmallryeConfigAccessor<T> implements ConfigAccessor<T> {
 
-    private final Config config;
+    private final SmallRyeConfig config;
     private final  Class<T> type;
     private final String propertyName;
     private final T defaultValue;
@@ -20,7 +20,7 @@ public class SmallryeConfigAccessor<T> implements ConfigAccessor<T> {
     private T cachedValue;
     private long cachedTime = System.nanoTime();
 
-    SmallryeConfigAccessor(Config config, Class<T> type, String propertyName, T defaultValue, boolean evaluateVariables, Converter<T> converter, long cacheNanos) {
+    SmallryeConfigAccessor(SmallRyeConfig config, Class<T> type, String propertyName, T defaultValue, boolean evaluateVariables, Converter<T> converter, long cacheNanos) {
         this.config = config;
         this.type = type;
         this.propertyName = propertyName;
@@ -38,14 +38,14 @@ public class SmallryeConfigAccessor<T> implements ConfigAccessor<T> {
             }
         }
 
-        T value = null;
-        Optional<T> optionalValue = config.getOptionalValue(propertyName, type);
-        if (optionalValue.isPresent()) {
-            value = optionalValue.get();
+        final T value;
+        if (converter != null) {
+            Optional<String> optionalValueStr = config.getOptionalValue(propertyName, String.class, evaluateVariables);
+            value = Optional.ofNullable(converter.convert(optionalValueStr.orElse(null)))
+                    .orElse(defaultValue);
         } else {
-            if (defaultValue != null) {
-                value = defaultValue;
-            }
+            value = Optional.ofNullable(config.getOptionalValue(propertyName, type, evaluateVariables).orElse(null))
+                    .orElse(defaultValue);
         }
 
         if (cacheNanos != -1) {

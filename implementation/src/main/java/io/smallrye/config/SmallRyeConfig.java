@@ -28,6 +28,7 @@ import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.eclipse.microprofile.config.Config;
 import org.eclipse.microprofile.config.ConfigAccessor;
@@ -35,6 +36,7 @@ import org.eclipse.microprofile.config.ConfigAccessorBuilder;
 import org.eclipse.microprofile.config.ConfigSnapshot;
 import org.eclipse.microprofile.config.spi.ConfigSource;
 import org.eclipse.microprofile.config.spi.Converter;
+import org.wildfly.common.expression.Expression;
 
 /**
  * @author <a href="http://jmesnil.net/">Jeff Mesnil</a> (c) 2017 Red Hat inc.
@@ -43,9 +45,13 @@ public class SmallRyeConfig implements Config, Serializable {
 
     private final List<ConfigSource> configSources;
     private Map<Type, Converter> converters;
+    private final transient ConcurrentHashMap<String, Expression> exprCache = new ConcurrentHashMap<>();
+    private final boolean evaluateVariables;
 
-    protected SmallRyeConfig(List<ConfigSource> configSources, Map<Type, Converter> converters) {
+
+    protected SmallRyeConfig(List<ConfigSource> configSources, Map<Type, Converter> converters, boolean evaluateVariables) {
         this.configSources = configSources;
+        this.evaluateVariables = evaluateVariables;
         this.converters = new HashMap<>(Converters.ALL_CONVERTERS);
         this.converters.putAll(converters);
     }
@@ -55,10 +61,19 @@ public class SmallRyeConfig implements Config, Serializable {
         for (ConfigSource configSource : configSources) {
             String value = configSource.getValue(name);
             if (value != null) {
-                return convert(value, aClass);
+                return convert(evaluate(value, evaluateVariables), aClass);
             }
         }
         throw new NoSuchElementException("Property " + name + " not found");
+    }
+
+    private String evaluate(String value, boolean evaluateVariables) {
+        if (!evaluateVariables || value == null) {
+            return value;
+        }
+        final Expression compiled = exprCache.computeIfAbsent(value, str -> Expression.compile(str, Expression.Flag.NO_TRIM, Expression.Flag.LENIENT_SYNTAX));
+        String evaluateValue = compiled.evaluate(ConfigExpander.INSTANCE);
+        return evaluateValue;
     }
 
     @Override
@@ -67,6 +82,19 @@ public class SmallRyeConfig implements Config, Serializable {
             String value = configSource.getValue(name);
             // treat empty value as null
             if (value != null && value.length() > 0) {
+                return Optional.of(convert(evaluate(value, evaluateVariables), aClass));
+            }
+        }
+        return Optional.empty();
+    }
+
+    // non-spec
+    <T> Optional<T> getOptionalValue(String name, Class<T> aClass, boolean eval) {
+        for (ConfigSource configSource : configSources) {
+            String value = configSource.getValue(name);
+            // treat empty value as null
+            if (value != null && value.length() > 0) {
+                value = evaluate(value, eval);
                 return Optional.of(convert(value, aClass));
             }
         }
