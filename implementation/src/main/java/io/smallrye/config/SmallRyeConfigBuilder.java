@@ -232,7 +232,7 @@ public class SmallRyeConfigBuilder implements ConfigBuilder {
     private boolean evaluateVariables(List<ConfigSource> configSources) {
         for (ConfigSource configSource : configSources) {
             if (configSource.getValue(SMALLRYE_CONFIG_EVALUATE_VARIABLES) != null) {
-                return Boolean.getBoolean(configSource.getValue(SMALLRYE_CONFIG_EVALUATE_VARIABLES));
+                return Boolean.valueOf(configSource.getValue(SMALLRYE_CONFIG_EVALUATE_VARIABLES));
             }
         }
         return DEFAULT_EVALUATE_VARIABLES;

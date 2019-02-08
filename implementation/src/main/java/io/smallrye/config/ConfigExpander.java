@@ -1,10 +1,10 @@
 package io.smallrye.config;
 
+import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.function.BiConsumer;
 
 import org.eclipse.microprofile.config.Config;
-import org.eclipse.microprofile.config.ConfigProvider;
 import org.wildfly.common.expression.Expression;
 import org.wildfly.common.expression.ResolveContext;
 
@@ -14,13 +14,14 @@ import org.wildfly.common.expression.ResolveContext;
  */
 public final class ConfigExpander implements BiConsumer<ResolveContext<RuntimeException>, StringBuilder> {
 
-    public static final ConfigExpander INSTANCE = new ConfigExpander();
-
     static final int MAX_DEPTH = 32;
     // substitute
     private static final ThreadLocal<int[]> depth = ThreadLocal.withInitial(() -> new int[1]);
+    private SmallRyeConfig config;
 
-    private ConfigExpander() {}
+    ConfigExpander(SmallRyeConfig config) {
+        this.config = config;
+    }
 
     // substitute
     private static boolean enter() {
@@ -42,11 +43,15 @@ public final class ConfigExpander implements BiConsumer<ResolveContext<RuntimeEx
             throw new IllegalArgumentException("Nested recursive expansion is too deep");
         } else try {
             final String key = context.getKey();
-            final Optional<String> expanded = ConfigProvider.getConfig().getOptionalValue(key, String.class);
+            final Optional<String> expanded = config.getOptionalValue(key, String.class, false);
             if (expanded.isPresent()) {
                 stringBuilder.append(expanded.get());
             } else {
-                context.expandDefault();
+                if (context.getExpandedDefault() != null && !context.getExpandedDefault().isEmpty()) {
+                    stringBuilder.append(context.getExpandedDefault());
+                } else {
+                    throw new NoSuchElementException("Property " + key + " not found");
+                }
             }
         } finally {
             exit();

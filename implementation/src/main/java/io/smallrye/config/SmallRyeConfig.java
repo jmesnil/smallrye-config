@@ -45,8 +45,10 @@ public class SmallRyeConfig implements Config, Serializable {
 
     private final List<ConfigSource> configSources;
     private Map<Type, Converter> converters;
-    private final transient ConcurrentHashMap<String, Expression> exprCache = new ConcurrentHashMap<>();
     private final boolean evaluateVariables;
+
+    private final transient ConcurrentHashMap<String, Expression> exprCache = new ConcurrentHashMap<>();
+    private transient final ConfigExpander configExpander;
 
 
     protected SmallRyeConfig(List<ConfigSource> configSources, Map<Type, Converter> converters, boolean evaluateVariables) {
@@ -54,6 +56,7 @@ public class SmallRyeConfig implements Config, Serializable {
         this.evaluateVariables = evaluateVariables;
         this.converters = new HashMap<>(Converters.ALL_CONVERTERS);
         this.converters.putAll(converters);
+        this.configExpander = new ConfigExpander(this);
     }
 
     @Override
@@ -71,21 +74,14 @@ public class SmallRyeConfig implements Config, Serializable {
         if (!evaluateVariables || value == null) {
             return value;
         }
-        final Expression compiled = exprCache.computeIfAbsent(value, str -> Expression.compile(str, Expression.Flag.NO_TRIM, Expression.Flag.LENIENT_SYNTAX));
-        String evaluateValue = compiled.evaluate(ConfigExpander.INSTANCE);
+        final Expression compiled = exprCache.computeIfAbsent(value, str -> Expression.compile(str, Expression.Flag.NO_TRIM, Expression.Flag.NO_RECURSE_DEFAULT, Expression.Flag.LENIENT_SYNTAX));
+        String evaluateValue = compiled.evaluate(configExpander);
         return evaluateValue;
     }
 
     @Override
     public <T> Optional<T> getOptionalValue(String name, Class<T> aClass) {
-        for (ConfigSource configSource : configSources) {
-            String value = configSource.getValue(name);
-            // treat empty value as null
-            if (value != null && value.length() > 0) {
-                return Optional.of(convert(evaluate(value, evaluateVariables), aClass));
-            }
-        }
-        return Optional.empty();
+        return getOptionalValue(name, aClass, evaluateVariables);
     }
 
     // non-spec
