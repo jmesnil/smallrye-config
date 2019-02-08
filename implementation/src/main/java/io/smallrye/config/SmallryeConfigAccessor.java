@@ -12,20 +12,20 @@ public class SmallryeConfigAccessor<T> implements ConfigAccessor<T> {
     private final Config config;
     private final  Class<T> type;
     private final String propertyName;
-    private final String resolvedPropertyName;
     private final T defaultValue;
+    private boolean evaluateVariables;
     private final Converter<T> converter;
     private long cacheNanos;
 
     private T cachedValue;
     private long cachedTime = System.nanoTime();
 
-    SmallryeConfigAccessor(Config config, Class<T> type, String propertyName, String resolvedPropertyName, T defaultValue, Converter<T> converter, long cacheNanos) {
+    SmallryeConfigAccessor(Config config, Class<T> type, String propertyName, T defaultValue, boolean evaluateVariables, Converter<T> converter, long cacheNanos) {
         this.config = config;
         this.type = type;
         this.propertyName = propertyName;
-        this.resolvedPropertyName = resolvedPropertyName;
         this.defaultValue = defaultValue;
+        this.evaluateVariables = evaluateVariables;
         this.converter = converter;
         this.cacheNanos = cacheNanos;
     }

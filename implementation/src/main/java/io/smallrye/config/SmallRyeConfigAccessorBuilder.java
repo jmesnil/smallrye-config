@@ -55,14 +55,13 @@ public class SmallRyeConfigAccessorBuilder<T> implements ConfigAccessorBuilder<T
 
     @Override
     public ConfigAccessor<T> build() {
-        String resolvedPropertyName = resolvePropertyName();
         T resolvedDefaultValue = resolvedDefaultValue();
 
         long cacheNanos = -1;
         if (cacheDuration != null) {
             cacheNanos = cacheDuration.toNanos();
         }
-        return new SmallryeConfigAccessor(config, type, propertyName, resolvedPropertyName, resolvedDefaultValue, converter, cacheNanos);
+        return new SmallryeConfigAccessor(config, type, propertyName, resolvedDefaultValue, evaluateVariables, converter, cacheNanos);
     }
 
     private T resolvedDefaultValue() {
@@ -77,9 +76,5 @@ public class SmallRyeConfigAccessorBuilder<T> implements ConfigAccessorBuilder<T
 
         }
         return null;
-    }
-
-    private String resolvePropertyName() {
-        return propertyName;
     }
 }
