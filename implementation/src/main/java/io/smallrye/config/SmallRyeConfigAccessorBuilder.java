@@ -14,7 +14,7 @@ public class SmallRyeConfigAccessorBuilder<T> implements ConfigAccessorBuilder<T
     private Converter<T> converter;
     private T defaultValue;
     private String defaultStringValue;
-    private boolean evaluateVariables;
+    private boolean expandVariables = true;
     private Duration cacheDuration = null;
 
     public SmallRyeConfigAccessorBuilder(String propertyName, Class<T> type, SmallRyeConfig config) {
@@ -48,8 +48,8 @@ public class SmallRyeConfigAccessorBuilder<T> implements ConfigAccessorBuilder<T
     }
 
     @Override
-    public ConfigAccessorBuilder<T> evaluateVariables(boolean evaluateVariables) {
-        this.evaluateVariables = evaluateVariables;
+    public ConfigAccessorBuilder<T> expandVariables(boolean expandVariables) {
+        this.expandVariables = expandVariables;
         return this;
     }
 
@@ -61,7 +61,7 @@ public class SmallRyeConfigAccessorBuilder<T> implements ConfigAccessorBuilder<T
         if (cacheDuration != null) {
             cacheNanos = cacheDuration.toNanos();
         }
-        return new SmallryeConfigAccessor(config, type, propertyName, resolvedDefaultValue, evaluateVariables, converter, cacheNanos);
+        return new SmallryeConfigAccessor(config, type, propertyName, resolvedDefaultValue, expandVariables, converter, cacheNanos);
     }
 
     private T resolvedDefaultValue() {

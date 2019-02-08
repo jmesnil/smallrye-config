@@ -18,6 +18,8 @@ package io.smallrye.config;
 
 import static io.smallrye.config.SecuritySupport.getContextClassLoader;
 
+import java.io.Closeable;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -79,6 +81,13 @@ public class SmallRyeConfigProviderResolver extends ConfigProviderResolver {
                 Map.Entry<ClassLoader, Config> entry = iterator.next();
                 if (entry.getValue() == config) {
                     iterator.remove();
+                    if (config instanceof Closeable) {
+                        try {
+                            ((Closeable)config).close();
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                    }
                     return;
                 }
             }

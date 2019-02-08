@@ -1,16 +1,17 @@
 package io.smallrye.config;
 
+import java.io.Serializable;
+import java.util.NoSuchElementException;
 import java.util.Optional;
 
-import org.eclipse.microprofile.config.Config;
 import org.eclipse.microprofile.config.ConfigAccessor;
 import org.eclipse.microprofile.config.ConfigSnapshot;
 import org.eclipse.microprofile.config.spi.Converter;
 
-public class SmallryeConfigAccessor<T> implements ConfigAccessor<T> {
+public class SmallryeConfigAccessor<T> implements ConfigAccessor<T>, Serializable {
 
-    private final Config config;
-    private final  Class<T> type;
+    private final SmallRyeConfig config;
+    private final Class<T> type;
     private final String propertyName;
     private final T defaultValue;
     private boolean evaluateVariables;
@@ -20,7 +21,7 @@ public class SmallryeConfigAccessor<T> implements ConfigAccessor<T> {
     private T cachedValue;
     private long cachedTime = System.nanoTime();
 
-    SmallryeConfigAccessor(Config config, Class<T> type, String propertyName, T defaultValue, boolean evaluateVariables, Converter<T> converter, long cacheNanos) {
+    SmallryeConfigAccessor(SmallRyeConfig config, Class<T> type, String propertyName, T defaultValue, boolean evaluateVariables, Converter<T> converter, long cacheNanos) {
         this.config = config;
         this.type = type;
         this.propertyName = propertyName;
@@ -28,6 +29,8 @@ public class SmallryeConfigAccessor<T> implements ConfigAccessor<T> {
         this.evaluateVariables = evaluateVariables;
         this.converter = converter;
         this.cacheNanos = cacheNanos;
+
+        config.addConfigAccessor(propertyName, this);
     }
 
     @Override
@@ -38,21 +41,28 @@ public class SmallryeConfigAccessor<T> implements ConfigAccessor<T> {
             }
         }
 
-        T value = null;
-        Optional<T> optionalValue = config.getOptionalValue(propertyName, type);
-        if (optionalValue.isPresent()) {
-            value = optionalValue.get();
-        } else {
-            if (defaultValue != null) {
-                value = defaultValue;
+        Optional<T> optionalValue = Optional.empty();
+        if (converter != null) {
+            Optional<String> optionalValueStr = config.getOptionalValue(propertyName, String.class, evaluateVariables);
+            if (optionalValueStr.isPresent()) {
+                optionalValue = Optional.of(converter.convert(optionalValueStr.get()));
             }
+        } else {
+            optionalValue = config.getOptionalValue(propertyName, type, evaluateVariables);
+        }
+        if (!optionalValue.isPresent() && defaultValue != null) {
+            optionalValue = Optional.of(defaultValue);
         }
 
-        if (cacheNanos != -1) {
-            cachedTime = System.nanoTime();
-            cachedValue = value;
+        if (optionalValue.isPresent()) {
+            if (cacheNanos != -1) {
+                cachedTime = System.nanoTime();
+                cachedValue = optionalValue.get();
+            }
+            return optionalValue.get();
+        } else {
+            throw new NoSuchElementException("Property " + propertyName + " can not be found");
         }
-        return value;
     }
 
     @Override
@@ -78,5 +88,12 @@ public class SmallryeConfigAccessor<T> implements ConfigAccessor<T> {
     @Override
     public T getDefaultValue() {
         return defaultValue;
+    }
+
+    public void invalidateCachedValue() {
+        cachedValue = null;
+        if (cacheNanos != -1) {
+            cachedTime = System.nanoTime();
+        }
     }
 }

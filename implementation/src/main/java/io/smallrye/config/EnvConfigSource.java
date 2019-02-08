@@ -16,11 +16,15 @@
 
 package io.smallrye.config;
 
+import static org.eclipse.microprofile.config.spi.ConfigSource.ChangeSupport.Type.IMMUTABLE;
+
 import java.io.Serializable;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.util.Collections;
 import java.util.Map;
+import java.util.Set;
+import java.util.function.Consumer;
 
 import org.eclipse.microprofile.config.spi.ConfigSource;
 
@@ -70,5 +74,10 @@ public class EnvConfigSource implements ConfigSource, Serializable {
     @Override
     public String getName() {
         return "EnvConfigSource";
+    }
+
+    @Override
+    public ChangeSupport onAttributeChange(Consumer<Set<String>> callback) {
+        return () -> IMMUTABLE;
     }
 }

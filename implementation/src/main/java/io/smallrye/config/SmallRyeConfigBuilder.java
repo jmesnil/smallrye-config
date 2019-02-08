@@ -45,6 +45,8 @@ public class SmallRyeConfigBuilder implements ConfigBuilder {
 
     private static final String META_INF_MICROPROFILE_CONFIG_PROPERTIES = "META-INF/microprofile-config.properties";
     private static final String WEB_INF_MICROPROFILE_CONFIG_PROPERTIES = "WEB-INF/classes/META-INF/microprofile-config.properties";
+    private static final String MP_CONFIG_EXPAND_VARIABLES = "mp-config.expand-variables";
+    private static final boolean DEFAULT_EXPAND_VARIABLES = true  ;
 
     // sources are not sorted by their ordinals
     private List<ConfigSource> sources = new ArrayList<>();
@@ -224,14 +226,23 @@ public class SmallRyeConfigBuilder implements ConfigBuilder {
 
         Map<Type, Converter> configConverters = new HashMap<>();
         converters.forEach((type, converterWithPriority) -> configConverters.put(type, converterWithPriority.converter));
-        return newConfig(sources, configConverters);
+        return newConfig(sources, configConverters, expandVariables());
     }
 
-    protected Config newConfig(List<ConfigSource> sources, Map<Type, Converter> configConverters) {
+    private boolean expandVariables() {
+        for (ConfigSource configSource : getDefaultSources()) {
+            if (configSource.getValue(MP_CONFIG_EXPAND_VARIABLES) != null) {
+                return Boolean.valueOf(configSource.getValue(MP_CONFIG_EXPAND_VARIABLES));
+            }
+        }
+        return DEFAULT_EXPAND_VARIABLES;
+    }
+
+    protected Config newConfig(List<ConfigSource> sources, Map<Type, Converter> configConverters, boolean evaluateVariables) {
         ServiceLoader<ConfigFactory> factoryLoader = ServiceLoader.load(ConfigFactory.class, this.classLoader);
         Iterator<ConfigFactory> iter = factoryLoader.iterator();
         if ( !iter.hasNext() ) {
-            return new SmallRyeConfig(sources, configConverters);
+            return new SmallRyeConfig(sources, configConverters, evaluateVariables);
         }
 
         ConfigFactory factory = iter.next();
