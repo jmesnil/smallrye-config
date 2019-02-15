@@ -16,6 +16,8 @@
 
 package io.smallrye.config;
 
+import static java.util.function.Function.identity;
+
 import java.io.Serializable;
 import java.lang.reflect.Type;
 import java.util.HashMap;
@@ -23,6 +25,7 @@ import java.util.Map;
 import java.util.OptionalDouble;
 import java.util.OptionalInt;
 import java.util.OptionalLong;
+import java.util.function.Function;
 
 import org.eclipse.microprofile.config.spi.Converter;
 
@@ -30,6 +33,18 @@ import org.eclipse.microprofile.config.spi.Converter;
  * @author <a href="http://jmesnil.net/">Jeff Mesnil</a> (c) 2017 Red Hat inc.
  */
 class Converters {
+
+    static Converter wrap(Converter converter) {
+        return value -> {
+            try {
+                return converter.convert(value);
+            } catch (IllegalArgumentException iae) {
+                throw iae;
+            } catch (Exception e) {
+                throw new IllegalArgumentException(e);
+            }
+        };
+    }
 
     @SuppressWarnings("unchecked")
     static final Converter<String> STRING_CONVERTER = (Converter & Serializable) value -> value;
@@ -95,36 +110,45 @@ class Converters {
     public static final Map<Type, Converter> ALL_CONVERTERS = new HashMap<>();
 
     static {
+
         ALL_CONVERTERS.put(String.class, STRING_CONVERTER);
 
-        ALL_CONVERTERS.put(Boolean.class, BOOLEAN_CONVERTER);
-        ALL_CONVERTERS.put(Boolean.TYPE, BOOLEAN_CONVERTER);
+        Converter booleanConverter = wrap(BOOLEAN_CONVERTER);
+        ALL_CONVERTERS.put(Boolean.class, booleanConverter);
+        ALL_CONVERTERS.put(Boolean.TYPE, booleanConverter);
 
-        ALL_CONVERTERS.put(Double.class, DOUBLE_CONVERTER);
-        ALL_CONVERTERS.put(Double.TYPE, DOUBLE_CONVERTER);
+        Converter doubleConverter = wrap(DOUBLE_CONVERTER);
+        ALL_CONVERTERS.put(Double.class, doubleConverter);
+        ALL_CONVERTERS.put(Double.TYPE, doubleConverter);
 
-        ALL_CONVERTERS.put(Float.class, FLOAT_CONVERTER);
-        ALL_CONVERTERS.put(Float.TYPE, FLOAT_CONVERTER);
+        Converter floatConverter = wrap(FLOAT_CONVERTER);
+        ALL_CONVERTERS.put(Float.class, floatConverter);
+        ALL_CONVERTERS.put(Float.TYPE, floatConverter);
 
-        ALL_CONVERTERS.put(Long.class, LONG_CONVERTER);
-        ALL_CONVERTERS.put(Long.TYPE, LONG_CONVERTER);
+        Converter longConverter = wrap(LONG_CONVERTER);
+        ALL_CONVERTERS.put(Long.class, longConverter);
+        ALL_CONVERTERS.put(Long.TYPE, longConverter);
 
-        ALL_CONVERTERS.put(Integer.class, INTEGER_CONVERTER);
-        ALL_CONVERTERS.put(Integer.TYPE, INTEGER_CONVERTER);
+        Converter integerConverter = wrap(INTEGER_CONVERTER);
+        ALL_CONVERTERS.put(Integer.class, integerConverter);
+        ALL_CONVERTERS.put(Integer.TYPE, integerConverter);
 
-        ALL_CONVERTERS.put(Short.class, SHORT_CONVERTER);
-        ALL_CONVERTERS.put(Short.TYPE, SHORT_CONVERTER);
+        Converter shortConverter = wrap(SHORT_CONVERTER);
+        ALL_CONVERTERS.put(Short.class, shortConverter);
+        ALL_CONVERTERS.put(Short.TYPE, shortConverter);
 
-        ALL_CONVERTERS.put(Byte.class, BYTE_CONVERTER);
-        ALL_CONVERTERS.put(Byte.TYPE, BYTE_CONVERTER);
+        Converter byteConverter = wrap(BYTE_CONVERTER);
+        ALL_CONVERTERS.put(Byte.class, byteConverter);
+        ALL_CONVERTERS.put(Byte.TYPE, byteConverter);
 
-        ALL_CONVERTERS.put(Character.class, CHARACTER_CONVERTER);
-        ALL_CONVERTERS.put(Character.TYPE, CHARACTER_CONVERTER);
+        Converter charConverter = wrap(CHARACTER_CONVERTER);
+        ALL_CONVERTERS.put(Character.class, charConverter);
+        ALL_CONVERTERS.put(Character.TYPE, charConverter);
 
-        ALL_CONVERTERS.put(Class.class, CLASS_CONVERTER);
+        ALL_CONVERTERS.put(Class.class, wrap(CLASS_CONVERTER));
 
-        ALL_CONVERTERS.put(OptionalInt.class, OPTIONAL_INT_CONVERTER);
-        ALL_CONVERTERS.put(OptionalLong.class, OPTIONAL_LONG_CONVERTER);
-        ALL_CONVERTERS.put(OptionalDouble.class, OPTIONAL_DOUBLE_CONVERTER);
+        ALL_CONVERTERS.put(OptionalInt.class, wrap(OPTIONAL_INT_CONVERTER));
+        ALL_CONVERTERS.put(OptionalLong.class, wrap(OPTIONAL_LONG_CONVERTER));
+        ALL_CONVERTERS.put(OptionalDouble.class, wrap(OPTIONAL_DOUBLE_CONVERTER));
     }
 }

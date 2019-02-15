@@ -16,6 +16,7 @@
 
 package io.smallrye.config;
 
+import static io.smallrye.config.Converters.wrap;
 import static java.lang.reflect.Array.newInstance;
 
 import java.io.Closeable;
@@ -52,7 +53,7 @@ import org.wildfly.common.expression.Expression;
 public class SmallRyeConfig implements Config, Serializable, Closeable {
 
     private final List<ConfigSource> configSources;
-    private Map<Type, Converter> converters;
+    transient private Map<Type, Converter> converters;
     private final boolean expandVariables;
     private Map<String, List<SmallryeConfigAccessor>> configAccessors = new HashMap<>();
 
@@ -74,7 +75,9 @@ public class SmallRyeConfig implements Config, Serializable, Closeable {
         this.configSources = configSources;
         this.expandVariables = expandVariables;
         this.converters = new HashMap<>(Converters.ALL_CONVERTERS);
-        this.converters.putAll(converters);
+        for (Map.Entry<Type, Converter> entry : converters.entrySet()) {
+            this.converters.put(entry.getKey(), wrap(entry.getValue()));
+        }
         this.configExpander = new ConfigExpander(this);
 
         for (ConfigSource configSource : configSources) {
