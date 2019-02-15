@@ -22,8 +22,8 @@ import java.io.Closeable;
 import java.io.Serializable;
 import java.lang.reflect.Array;
 import java.lang.reflect.Type;
-import java.util.Collection;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -34,9 +34,9 @@ import java.util.OptionalDouble;
 import java.util.OptionalInt;
 import java.util.OptionalLong;
 import java.util.Set;
-import java.util.function.IntFunction;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
+import java.util.function.IntFunction;
 
 import org.eclipse.microprofile.config.Config;
 import org.eclipse.microprofile.config.ConfigAccessor;
@@ -147,8 +147,18 @@ public class SmallRyeConfig implements Config, Serializable, Closeable {
             for (ConfigSource configSource : configSources) {
                 String value = configSource.getValue(name);
                 // treat empty value as null
-                if (value != null && value.length() > 0) {
+                if (value != null && value.length() >= 0) {
                     value = evaluate(value, eval);
+
+                    // check for  Optional numerical types to return directly Optional.empty()
+                    // if the property is not found
+                    if (value.isEmpty() &&
+                            (aClass.isAssignableFrom(OptionalInt.class) ||
+                                    aClass.isAssignableFrom(OptionalLong.class) ||
+                                    aClass.isAssignableFrom(OptionalDouble.class))) {
+                        return Optional.empty();
+
+                    }
                     return Optional.of(convert(value, aClass));
                 }
             }

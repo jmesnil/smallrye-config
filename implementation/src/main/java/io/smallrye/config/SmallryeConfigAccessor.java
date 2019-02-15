@@ -35,9 +35,29 @@ public class SmallryeConfigAccessor<T> implements ConfigAccessor<T>, Serializabl
 
     @Override
     public T getValue() {
+        Optional<T> optionalValue = getOptionalValue();
+        if (optionalValue.isPresent()) {
+            return optionalValue.get();
+        } else {
+            throw new NoSuchElementException("Property " + propertyName + " can not be found");
+        }
+    }
+
+    @Override
+    public T getValue(ConfigSnapshot configSnapshot) {
+        return null;
+    }
+
+    @Override
+    public Optional<T> getOptionalValue(ConfigSnapshot configSnapshot) {
+        return Optional.empty();
+    }
+
+    @Override
+    public Optional<T> getOptionalValue() {
         if (cacheNanos != -1) {
             if (cachedValue != null && System.nanoTime() < (cachedTime + cacheNanos)) {
-                return cachedValue;
+                return Optional.of(cachedValue);
             }
         }
 
@@ -59,24 +79,8 @@ public class SmallryeConfigAccessor<T> implements ConfigAccessor<T>, Serializabl
                 cachedTime = System.nanoTime();
                 cachedValue = optionalValue.get();
             }
-            return optionalValue.get();
-        } else {
-            throw new NoSuchElementException("Property " + propertyName + " can not be found");
+            return optionalValue;
         }
-    }
-
-    @Override
-    public T getValue(ConfigSnapshot configSnapshot) {
-        return null;
-    }
-
-    @Override
-    public Optional<T> getOptionalValue(ConfigSnapshot configSnapshot) {
-        return Optional.empty();
-    }
-
-    @Override
-    public Optional<T> getOptionalValue() {
         return Optional.empty();
     }
 

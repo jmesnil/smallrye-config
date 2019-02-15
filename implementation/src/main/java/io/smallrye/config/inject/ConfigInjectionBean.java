@@ -177,7 +177,7 @@ public class ConfigInjectionBean<T> implements Bean<T>, PassivationCapable {
         }
 
         @Override
-        public boolean evaluateVariables() {
+        public boolean expandVariables() {
             return false;
         }
 

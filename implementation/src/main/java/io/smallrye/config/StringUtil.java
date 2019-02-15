@@ -25,7 +25,7 @@ public class StringUtil {
     private static final String DELIMITER = "(?<!\\\\),";
 
     public static String[] split(String text) {
-        if (text == null) {
+        if (text == null || text.isEmpty()) {
             return new String[0];
         }
         String[] split = text.split(DELIMITER);
